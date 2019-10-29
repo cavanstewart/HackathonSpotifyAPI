@@ -1,45 +1,57 @@
 import React, { Component } from "react";
 
 class Playlists extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
-      accessToken: "",
-      refreshToken: "",
       playlists: [],
+      playlistURI: ""
     };
   }
-  componentDidMount() {
-    var hashParams = {};
-    var e,
-      r = /([^&;=]+)=?([^&;]*)/g,
-      q = window.location.hash.substring(1);
-    while ((e = r.exec(q))) {
-      hashParams[e[1]] = decodeURIComponent(e[2]);
-    }
-
-    this.setState({ accessToken: hashParams.access_token });
-    this.setState({ refreshToken: hashParams.refresh_token });
-
-    fetch("https://api.spotify.com/v1/me/playlists?limit=50", {
+  componentDidUpdate(prevProps) {
+    if (this.props.accessToken !== prevProps.accessToken) {
+      fetch("https://api.spotify.com/v1/me/playlists?limit=50", {
         headers: {
-            Authorization: "Bearer " + hashParams.access_token
+          Authorization: "Bearer " + this.props.accessToken
         }
-    }).then(res => res.json()).then(data => this.setState({ playlists: data.items }));
+      })
+        .then(res => res.json())
+        .then(data => this.setState({ playlists: data.items }));
+    }
+  }
+
+  handleClick(obj) {
+    this.setState({ playlistURI: obj.uri });
   }
 
   render() {
     return (
-      this.state.accessToken != undefined && (
-        <div className="container">
-            <div>
-                <h6>Playlists</h6>
-                {this.state.playlists.map( (obj, index) => (
-                    <li key={index} >{obj.name}</li>
-                ))}
+      <div className="container">
+        <div className="row">
+          <div className="col">
+            <div className="btn-group-vertical">
+              {this.state.playlists.map((obj, index) => (
+                <button
+                  onClick={() => this.handleClick(obj)}
+                  className="btn btn-dark"
+                  key={index}
+                >
+                  {obj.name}
+                </button>
+              ))}
             </div>
+          </div>
+          <div className="col">
+            {this.state.playlistURI !== "" && (
+              <iframe
+                title="spotify:playlist:050fIat4Fq2OYgFx5glqyy"
+                src={`https://open.spotify.com/embed?uri=${this.state.playlistURI}`}
+                allow="encrypted-media"
+              ></iframe>
+            )}
+          </div>
         </div>
-      )
+      </div>
     );
   }
 }
